@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TOOLBOX JEOPARDY</title>
+<style>
+:root {
+  --blue: #071aa8;
+  --blue2: #001b8f;
+  --yellow: #ffd100;
+  --white: #ffffff;
+  --black: #050505;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: var(--black);
+}
+
+body {
+  overflow-y: auto;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 70px minmax(0, 1fr) 74px;
+  background: #fff;
+}
+
+.header {
+  background: linear-gradient(180deg, #071aa8, #04148f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.logo-wrap img {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
+.board-wrap {
+  min-height: 0;
+  padding: 14px 4vw 8px;
+}
+
+.board {
+  height: 100%;
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 70px repeat(5, minmax(68px, 1fr));
+  gap: 7px;
+}
+
+.category,
+.tile {
+  background: linear-gradient(145deg, var(--blue), var(--blue2));
+  color: white;
+  border-radius: 6px;
+  border: 2px solid #0a27c8;
+  box-shadow: inset 0 0 18px rgba(255,255,255,.06), 0 2px 4px rgba(0,0,0,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.category {
+  font-size: clamp(12px, 1.25vw, 20px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.15;
+  padding: 5px;
+}
+
+.tile {
+  cursor: pointer;
+  color: white;
+  font-size: clamp(24px, 3.3vw, 46px);
+  font-weight: 900;
+  text-shadow: 1px 2px 0 rgba(0,0,0,.25);
+  transition: transform .08s ease, background .15s ease;
+}
+
+.tile:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(145deg, #0924c8, #06188f);
+}
+
+.tile.used {
+  background: #17205a;
+  color: rgba(255,255,255,.2);
+  text-shadow: none;
+}
+
+.tile.used::after {
+  content: "USED";
+  position: absolute;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.45);
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 5vw 12px;
+}
+
+.instruction {
+  color: #071aa8;
+  font-size: clamp(15px, 1.4vw, 22px);
+  text-align: center;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(4, 88px);
+  border: 2px solid var(--blue);
+  border-radius: 5px;
+  overflow: hidden;
+  background: white;
+}
+
+.score {
+  text-align: center;
+  padding: 5px 8px 6px;
+  border-right: 1px solid var(--blue);
+}
+
+.score:last-child {
+  border-right: none;
+}
+
+.score-title {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.score-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+}
+
+.reset {
+  height: 42px;
+  padding: 0 20px;
+  border: 2px solid var(--blue);
+  background: white;
+  color: var(--blue);
+  font-weight: 900;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.reset:hover {
+  background: #f0f2ff;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,.08);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 20px;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal {
+  width: min(520px, 92vw);
+  background: white;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.32);
+  overflow: hidden;
+}
+
+.modal.answer-modal {
+  width: min(460px, 90vw);
+}
+
+.modal-header {
+  min-height: 54px;
+  border-bottom: 1px solid #d6d6df;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  font-weight: 900;
+  font-size: 18px;
+  position: relative;
+  text-align: center;
+  padding: 10px 52px;
+}
+
+.close {
+  position: absolute;
+  right: 14px;
+  top: 8px;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--blue);
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 28px 32px 26px;
+}
+
+.label {
+  color: var(--blue);
+  font-weight: 900;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.prompt {
+  font-size: clamp(23px, 2.8vw, 32px);
+  line-height: 1.25;
+  margin-bottom: 24px;
+}
+
+.divider {
+  height: 1px;
+  background: #cfd2da;
+  margin: 24px 0 26px;
+}
+
+.action-row {
+  display: flex;
+  justify-content: center;
+}
+
+.primary {
+  background: linear-gradient(180deg, var(--blue), var(--blue2));
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 13px 30px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.score-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.mini {
+  background: #fff;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+@media (max-height: 760px) and (min-width: 851px) {
+  .app {
+    grid-template-rows: 58px minmax(0, 1fr) 58px;
+  }
+  .logo-wrap img {
+    height: 36px;
+  }
+  .board-wrap {
+    padding-top: 8px;
+    padding-bottom: 5px;
+  }
+  .board {
+    min-height: 430px;
+    grid-template-rows: 56px repeat(5, minmax(56px, 1fr));
+    gap: 5px;
+  }
+  .category {
+    font-size: clamp(10px, 1vw, 16px);
+  }
+  .tile {
+    font-size: clamp(22px, 2.8vw, 38px);
+  }
+  .score-value {
+    font-size: 24px;
+  }
+  .scoreboard {
+    grid-template-columns: repeat(4, 76px);
+  }
+  .reset {
+    height: 36px;
+  }
+}
+
+@media (max-width: 850px) {
+  .app {
+    min-height: 100vh;
+    display: block;
+  }
+  .header {
+    height: 62px;
+  }
+  .logo-wrap img {
+    height: 36px;
+  }
+  .board-wrap {
+    padding: 10px;
+  }
+  .board {
+    height: auto;
+    min-height: auto;
+    grid-template-rows: 56px repeat(5, 72px);
+    gap: 5px;
+  }
+  .category {
+    font-size: 10px;
+  }
+  .tile {
+    font-size: 22px;
+  }
+  .footer {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 10px;
+  }
+  .scoreboard {
+    justify-self: center;
+  }
+  .reset {
+    justify-self: center;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo-wrap">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWAAAABOCAYAAAAesMy+AAAElUlEQVR4nO3d0ZLaOBCFYbGV939l9mJDrYcBI2x19znu/7tKVRLcltoHjRmL2/1+HwCAfP9UFwAAXRHAAFCEAAaAIn+qCwCwxMoPc24LXws7WAEDQBECGACKEMAAUIQABoAiBDAAFCGAAaAIAQwARQhgAChCAANAEQIYAIoQwABQhL0g1pt9Jp/n7eGMPl+AAF7jyEYoz/+HRoWyo5v90Oc7Vgbw6q/W+DRRUV/lMdsgq4//eL3VDbqqzuxxUR2HMeZqu8pXzVT2eWSmZOfVS64r4Ormjjx+VBCfdR96Nc3K7pfq/lwh+hy2r+/aV6fxIdxPM6vurIsr81jAFm9YSRwDuGqyuh33CMVaI2pSPE93LRccjgEcZW/1W90Y1cd/yKxD5ZyBMK73gDOpBIHzPVjkOdIjKj3err/dVsDd7019W0/3FWvGh6XAYW4BHOXVO6/qBVZdV/XxsZbKfLZb/Y7hFcDdV3Nb6vUBmOAUwFGe33kJt+8pjllGTYrn/Q2V+luufsfwCWCVRlHCmADmXAI4CqvfYzIfRgEuyyGAuQjf2xubzuPG5wU+2t5+GKP37wGz+l2DccMY74OU/tjhsALGPh6RrsdYvHcb78O59ep3DP0Art5yEn4Iwxqf9nLYC+K2Ot+CwHmEHZ592oCdEN5QDuDM1W/Esbgn1st2r47bYJ4f2Pd3h3IAO9trtMffrbxAr7xRzzfnphR6jjVHU/2ygTLq94BXy5h4hebqdFHjuKpepT//6hbAShSCGmsRLPMYq9ErgLusfrvigj6msmfbz1mnAAagp3UIE8DAWo6BUv2Tm+OYLdEpgNtOcgPM7XnVIdxSpwDOQBDEYFxzcD84WbcAVprkqFqUzrEr5zngkeFE3QI4w8zF53yBqmEsY1SEcLu5VA7gqAao/qqazMeeMY+V32+3wbiE4lHk/0Q8u9/u3Rw/OD0ePrNfwxX2z5abE+UV8Bjeq2DEYx7Pex7DT9tKPriujGfPL4V6AOMzx4vgCJmLpolvghgHOQRw1ir4Co2kGFIO43p78+ezFOdja/YD46rvHnTonVO4B4xXHPazVa/vahjvAA4r4DFYBb/jVi+ADZcAxm9O4etU62qqK0fFulz75HDdBLD/KjjKinFw+C2WVzXSAzouPRdOAZw5EeqTrl4ftCmufl2duhadAjiSU0NGh69yuDvN05Zr3ZlmvkfxctwCuPsqeK8mtYvc9fbD1an1yRi+83C6brcAjvSqMZUao6IWpfPP1vncFanNx5J6HAM4eyIUJl6hBpyjsvJU66Vv6lGr/TTHAI707iKpfO79Kk13lfO4ApV9HI7U4Fr3S64B3CUMXZtNoe5PHGqMVnkdnTm2a92/uAZwpE8/KmasHlRWKN2tngOV2xBb2Xv+rjpOds0hx1LdC2LmZKP2K5gd6Me/u9Kn8tXH72hlH5+dv4iefn7tqNd1qvn/A9zvim/Kto4MJqEHdUdDoqq3z4Raas0EMAAU4R4wABQhgAGgCAEMAEUIYAAoQgADQBECGACKEMAAUIQABoAiBDAAFCGAAaAIAQwARQhgACjyL4jIuqkbVPuAAAAAAElFTkSuQmCC" alt="Komatsu" />
+    </div>
+  </header>
+
+  <main class="board-wrap">
+    <div class="board" id="board"></div>
+  </main>
+
+  <footer class="footer">
+    <div class="instruction">Click any value to view the question.</div>
+    <div class="scoreboard">
+      <div class="score">
+        <div class="score-title">TEAM 1</div>
+        <div class="score-value" id="score1">0</div>
+      </div>
+      <div class="score">
+        <div class="score-title">TEAM 2</div>
+        <div class="score-value" id="score2">0</div>
+      </div>
+      <div class="score">
+        <div class="score-title">TEAM 3</div>
+        <div class="score-value" id="score3">0</div>
+      </div>
+      <div class="score">
+        <div class="score-title">TEAM 4</div>
+        <div class="score-value" id="score4">0</div>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGame()">RESET GAME</button>
+  </footer>
+</div>
+
+<div class="modal-backdrop" id="questionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="questionTitle"></span>
+      <button class="close" onclick="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="label">QUESTION:</div>
+      <div class="prompt" id="questionText"></div>
+      <div class="divider"></div>
+      <div class="action-row">
+        <button class="primary" onclick="showAnswer()">VIEW ANSWER</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="answerModal">
+  <div class="modal answer-modal">
+    <div class="modal-header">
+      <span id="answerTitle"></span>
+      <button class="close" onclick="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="label">ANSWER:</div>
+      <div class="prompt" id="answerText"></div>
+      <div class="divider"></div>
+      <div class="action-row">
+        <button class="primary" onclick="closeModals()">BACK TO BOARD</button>
+      </div>
+      <div class="score-controls">
+        <button class="mini" onclick="adjustScore(1)">TEAM 1 +</button>
+        <button class="mini" onclick="adjustScore(2)">TEAM 2 +</button>
+        <button class="mini" onclick="adjustScore(3)">TEAM 3 +</button>
+        <button class="mini" onclick="adjustScore(4)">TEAM 4 +</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const gameData = [
+  {
+    category: "FFO",
+    clues: [
+      { value: 100, q: "This program incentivizes dealers with parts discounts for planning major repairs in advance.", a: "Firm Future Order" },
+      { value: 200, q: "What is the required advance order timeframe for this program?", a: "4 months / 120 days" },
+      { value: 300, q: "What is the Dealer net (DNet) discount percentage offered on major components and supplemental parts?", a: "10%" },
+      { value: 400, q: "What is the maximum total delay allowed for shipments?", a: "180 days (3 x 60 days)" },
+      { value: 500, q: "What must be included in every order to qualify?", a: "At least one major component" }
+    ]
+  },
+  {
+    category: "Machine Rebuild & Repair",
+    clues: [
+      { value: 100, q: "What is the minimum total parts order value required to qualify for this program?", a: "$5,000" },
+      { value: 200, q: "What discount level is offered when two or more major components are repaired or replaced?", a: "Up to 20%" },
+      { value: 300, q: "What must be included on the invoice for the program to qualify?", a: "Labor (dealer must perform repair)" },
+      { value: 400, q: "What type of parts sales do not qualify for this program?", a: "Over-the-counter parts" },
+      { value: 500, q: "How is the discount split between Komatsu and the dealer?", a: "50/50 split" }
+    ]
+  },
+  {
+    category: "Reman Component Assurance",
+    clues: [
+      { value: 100, q: "What is the coverage duration or usage limit for reman components?", a: "5 years or 12,000 hours" },
+      { value: 200, q: "What oil sampling program must be used to qualify?", a: "KOWA" },
+      { value: 300, q: "This type of coverage is NOT considered what?", a: "Warranty" },
+      { value: 400, q: "What core value is guaranteed under this program?", a: "100% core value" },
+      { value: 500, q: "Without a PM Clinic, what type of reimbursement is not provided?", a: "R&I labor reimbursement" }
+    ]
+  },
+  {
+    category: "HST Program",
+    clues: [
+      { value: 100, q: "What is the average discount for Level 1 pricing?", a: "Approximately 45%" },
+      { value: 200, q: "What is the average discount for Level 2 pricing?", a: "Approximately 55%" },
+      { value: 300, q: "How many components are required at minimum for Level 1 pricing?", a: "At least 2 components" },
+      { value: 400, q: "What is the warranty period for parts under this program?", a: "2 years" },
+      { value: 500, q: "Can this program be combined with other programs?", a: "No" }
+    ]
+  },
+  {
+    category: "KGP & Applications",
+    clues: [
+      { value: 100, q: "What are the three primary areas of the Komatsu Global Portal?", a: "Document Center, Apps, and Communities" },
+      { value: 200, q: "What application provides a serial-number-specific bill of materials?", a: "BOM App" },
+      { value: 300, q: "What system provides machine health, usage, location and parts ordering?", a: "MyKomatsu" },
+      { value: 400, q: "What tool helps plan and manage machine overhauls with diagrams and 3D visuals?", a: "K-VROS" },
+      { value: 500, q: "What feature helps users quickly find documents in the Document Center?", a: "Advanced Search" }
+    ]
+  }
+];
+
+let used = JSON.parse(localStorage.getItem("komatsuGameFourTeamsUsedV1") || "{}");
+let scores = JSON.parse(localStorage.getItem("komatsuGameFourTeamsScoresV1") || "{\"1\":0,\"2\":0,\"3\":0,\"4\":0}");
+let active = null;
+
+function save() {
+  localStorage.setItem("komatsuGameFourTeamsUsedV1", JSON.stringify(used));
+  localStorage.setItem("komatsuGameFourTeamsScoresV1", JSON.stringify(scores));
+}
+
+function renderBoard() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+
+  gameData.forEach(cat => {
+    const div = document.createElement("div");
+    div.className = "category";
+    div.textContent = cat.category;
+    board.appendChild(div);
+  });
+
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      const clue = gameData[col].clues[row];
+      const key = `${col}-${row}`;
+      const button = document.createElement("button");
+      button.className = "tile" + (used[key] ? " used" : "");
+      button.textContent = "$" + clue.value;
+      button.onclick = () => openQuestion(col, row);
+      board.appendChild(button);
+    }
+  }
+}
+
+function renderScores() {
+  document.getElementById("score1").textContent = scores["1"] || 0;
+  document.getElementById("score2").textContent = scores["2"] || 0;
+  document.getElementById("score3").textContent = scores["3"] || 0;
+  document.getElementById("score4").textContent = scores["4"] || 0;
+}
+
+function openQuestion(col, row) {
+  const clue = gameData[col].clues[row];
+  const key = `${col}-${row}`;
+  used[key] = true;
+  active = {...clue, category: gameData[col].category};
+  save();
+  renderBoard();
+
+  document.getElementById("questionTitle").textContent = `${active.category} – $${active.value}`;
+  document.getElementById("questionText").textContent = active.q;
+  document.getElementById("questionModal").classList.add("active");
+}
+
+function showAnswer() {
+  if (!active) return;
+  document.getElementById("questionModal").classList.remove("active");
+  document.getElementById("answerTitle").textContent = `${active.category} – $${active.value}`;
+  document.getElementById("answerText").textContent = active.a;
+  document.getElementById("answerModal").classList.add("active");
+}
+
+function closeModals() {
+  document.getElementById("questionModal").classList.remove("active");
+  document.getElementById("answerModal").classList.remove("active");
+}
+
+function adjustScore(team) {
+  if (!active) return;
+  const key = String(team);
+  scores[key] = (scores[key] || 0) + active.value;
+  save();
+  renderScores();
+}
+
+function resetGame() {
+  if (!confirm("Reset used tiles and scores?")) return;
+  used = {};
+  scores = {"1":0,"2":0,"3":0,"4":0};
+  active = null;
+  save();
+  renderBoard();
+  renderScores();
+  closeModals();
+}
+
+renderBoard();
+renderScores();
+</script>
+</body>
+</html>
